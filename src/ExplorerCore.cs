@@ -56,8 +56,6 @@ namespace UnityExplorer
             UERuntimeHelper.Init();
             ExplorerBehaviour.Setup();
             UnityCrashPrevention.Init();
-
-            //Extra inits
             ArrowGenerator.PatchLights();
         }
 
@@ -69,17 +67,19 @@ namespace UnityExplorer
             SceneHandler.Init();
 
             Log($"Creating UI...");
-
-            UIManager.InitUI();
+            try
+            {
+                UIManager.InitUI();
+            }
+            catch (Exception ex)
+            {
+                LogError($"Exception during UI initialization (some features may be unavailable): {ex.Message}");
+            }
 
             Log($"{NAME} {VERSION} ({Universe.Context}) initialized.");
 
             IInputManager.Setup();
-
-            // InspectorManager.Inspect(typeof(Tests.TestClass));
-
             KeypressListener.Setup();
-
             if (ConfigManager.Auto_Scale_UI.Value) MakeUEUIScale();
         }
 

@@ -359,8 +359,16 @@ namespace UniverseLib.Input
         private static readonly Dictionary<string, bool> actionWasPerformedStates = new();
 
         // --- Initialization ---
+        private static bool _isVRMode = false;
+
         public static void Init()
         {
+            _isVRMode = IsVREnabled();
+            if (_isVRMode)
+            {
+                ExplorerCore.Log("VR detected - input blocking will be disabled for VR controllers.");
+            }
+
             Type buttonControlType = ReflectionUtility.GetTypeByName("UnityEngine.InputSystem.Controls.ButtonControl, Unity.InputSystem");
             Type inputActionType = ReflectionUtility.GetTypeByName("UnityEngine.InputSystem.InputAction, Unity.InputSystem");
 
@@ -380,6 +388,38 @@ namespace UniverseLib.Input
             GetButtonControls();
 
             IGamepadInputInterceptor.Init();
+        }
+
+        // VR Detection helper
+        private static bool IsVREnabled()
+        {
+            try
+            {
+                // Try modern XR API first (Unity 2019.3+)
+                Type xrSettingsType = ReflectionUtility.GetTypeByName("UnityEngine.XR.XRSettings");
+                if (xrSettingsType != null)
+                {
+                    PropertyInfo isDeviceActiveProp = xrSettingsType.GetProperty("isDeviceActive", BindingFlags.Public | BindingFlags.Static);
+                    if (isDeviceActiveProp != null && (bool)isDeviceActiveProp.GetValue(null))
+                        return true;
+
+                    PropertyInfo enabledProp = xrSettingsType.GetProperty("enabled", BindingFlags.Public | BindingFlags.Static);
+                    if (enabledProp != null && (bool)enabledProp.GetValue(null))
+                        return true;
+                }
+
+                // Try legacy VR API (Unity 5.6 - 2019.2)
+                Type vrSettingsType = ReflectionUtility.GetTypeByName("UnityEngine.VR.VRSettings");
+                if (vrSettingsType != null)
+                {
+                    PropertyInfo enabledProp = vrSettingsType.GetProperty("enabled", BindingFlags.Public | BindingFlags.Static);
+                    if (enabledProp != null && (bool)enabledProp.GetValue(null))
+                        return true;
+                }
+            }
+            catch { }
+
+            return false;
         }
 
         private static void PatchButtonControl(Type buttonControlType)
@@ -564,15 +604,34 @@ namespace UniverseLib.Input
                 Type type = __instance.GetType();
                 PropertyInfo pathProp = type.GetProperty("path") ?? type.GetProperty("name");
                 string key = (pathProp?.GetValue(__instance, null)?.ToString() ?? string.Empty).ToLower();
-                
+
                 // Normalize gamepad paths so they match what IGamepadInputInterceptor registered
                 key = IGamepadInputInterceptor.NormalizeControlPath(key);
-                
+
+                // Always store state so our hotkey detection works
                 dict[key] = __result;
 
+                // In VR mode, never block any input to avoid breaking VR controllers
+                if (_isVRMode)
+                {
+                    return;
+                }
+
+                // Only block input for keyboard/mouse/gamepad when freecam is active
                 if (FreeCamPanel.ShouldOverrideInput())
                 {
-                    __result = false;
+                    bool isBlockableDevice = key.StartsWith("/keyboard") ||
+                                             key.StartsWith("/mouse") ||
+                                             key.StartsWith("/gamepad") ||
+                                             key.StartsWith("/xinput") ||
+                                             key.StartsWith("/dualshock") ||
+                                             key.StartsWith("/dualsense") ||
+                                             key.StartsWith("/switch");
+
+                    if (isBlockableDevice)
+                    {
+                        __result = false;
+                    }
                 }
             }
             catch (Exception ex)

@@ -66,6 +66,12 @@ namespace UnityExplorer.Config
         public static ConfigElement<string> Custom_Components_To_Disable;
         public static ConfigElement<string> Preferred_Target_Camera;
 
+        // VR Spectator settings
+        public static ConfigElement<KeyCode> VR_Spectator_Toggle;
+        public static ConfigElement<float> VR_Spectator_Position_Smooth;
+        public static ConfigElement<float> VR_Spectator_Rotation_Smooth;
+        public static ConfigElement<float> VR_Spectator_FOV;
+
         // internal configs
         internal static InternalConfigHandler InternalHandler { get; private set; }
         internal static readonly Dictionary<UIManager.Panels, ConfigElement<string>> PanelSaveData = new();
@@ -322,6 +328,28 @@ namespace UnityExplorer.Config
                 "The camera that will be targeted by the freecam methods.\n" +
                 "Only used when Freecam Camera Target Selection is enabled.",
                 "\\");
+
+            // VR Spectator settings
+            VR_Spectator_Toggle = new("VR Spectator Toggle",
+                "Hotkey to toggle the VR Spectator camera on/off.",
+                KeyCode.F9);
+
+            VR_Spectator_Position_Smooth = new("VR Spectator Position Smoothing",
+                "How much to smooth the spectator camera position.\n" +
+                "Lower values = more responsive but jerkier.\n" +
+                "Higher values = smoother but more delayed.",
+                0.1f);
+
+            VR_Spectator_Rotation_Smooth = new("VR Spectator Rotation Smoothing",
+                "How much to smooth the spectator camera rotation.\n" +
+                "Lower values = more responsive but jerkier.\n" +
+                "Higher values = smoother but more delayed.",
+                0.08f);
+
+            VR_Spectator_FOV = new("VR Spectator FOV",
+                "Field of view for the VR spectator camera.\n" +
+                "Wider FOV (90-110) gives better context for spectators.",
+                90f);
         }
     }
 }

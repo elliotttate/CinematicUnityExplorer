@@ -134,6 +134,11 @@ namespace UnityExplorer
                 FreeCamPanel.ToggleFreecam();
             }
 
+            if (IInputManager.GetKeyDown(ConfigManager.VR_Spectator_Toggle.Value))
+            {
+                VRSpectatorPanel.ToggleSpectator();
+            }
+
             if (IInputManager.GetKeyDown(ConfigManager.Block_Freecam_Movement.Value))
             {
                 FreeCamPanel.blockFreecamMovementToggle.isOn = !FreeCamPanel.blockFreecamMovementToggle.isOn;

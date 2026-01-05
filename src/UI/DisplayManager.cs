@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Reflection;
 using UnityExplorer.Config;
 using UniverseLib.Input;
 
@@ -54,6 +56,9 @@ namespace UnityExplorer.UI
                     canvasCamera = new GameObject("UnityExplorer_CanvasCamera").AddComponent<Camera>();
                     GameObject.DontDestroyOnLoad(canvasCamera.gameObject);
                     canvasCamera.hideFlags = HideFlags.HideAndDontSave;
+
+                    // Disable VR rendering on this camera to prevent interference with VR games
+                    SetCameraToNonVR(canvasCamera);
                 }
                 canvasCamera.targetDisplay = display;
             }
@@ -71,6 +76,48 @@ namespace UnityExplorer.UI
                 panel.EnsureValidSize();
                 panel.EnsureValidPosition();
                 panel.Dragger.OnEndResize();
+            }
+        }
+
+        // Reflection helpers for stereoTargetEye (VR isolation)
+        private static PropertyInfo _stereoTargetEyeProp;
+        private static object _stereoTargetEyeNone;
+        private static bool _stereoReflectionInitialized;
+
+        /// <summary>
+        /// Set a camera to not render to VR (stereoTargetEye = None).
+        /// Uses reflection for compatibility with different Unity versions.
+        /// </summary>
+        private static void SetCameraToNonVR(Camera cam)
+        {
+            if (!_stereoReflectionInitialized)
+            {
+                _stereoReflectionInitialized = true;
+                try
+                {
+                    _stereoTargetEyeProp = typeof(Camera).GetProperty("stereoTargetEye");
+                    if (_stereoTargetEyeProp != null)
+                    {
+                        Type stereoMaskType = _stereoTargetEyeProp.PropertyType;
+                        _stereoTargetEyeNone = Enum.Parse(stereoMaskType, "None");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ExplorerCore.LogWarning($"Failed to initialize stereo reflection: {ex.Message}");
+                }
+            }
+
+            if (_stereoTargetEyeProp == null || _stereoTargetEyeNone == null)
+                return;
+
+            try
+            {
+                _stereoTargetEyeProp.SetValue(cam, _stereoTargetEyeNone, null);
+            }
+            catch (Exception ex)
+            {
+                ExplorerCore.LogWarning($"Failed to set stereoTargetEye: {ex.Message}");
             }
         }
     }

@@ -28,6 +28,7 @@ namespace UnityExplorer.UI
             PostProcessingPanel,
             AnimatorPanel,
             Misc,
+            VRSpectator,
         }
 
         public enum VerticalAnchor
@@ -79,6 +80,10 @@ namespace UnityExplorer.UI
             UIRootRect = UIRoot.GetComponent<RectTransform>();
             UICanvas = UIRoot.GetComponent<Canvas>();
 
+            // Fix for VR: Change canvas to ScreenSpaceOverlay to prevent VR rendering interference
+            // UniverseLib uses ScreenSpaceCamera which can cause issues with VR compositor layers
+            UICanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+
             DisplayManager.Init();
 
             Display display = DisplayManager.ActiveDisplay;
@@ -102,10 +107,14 @@ namespace UnityExplorer.UI
             UIPanels.Add(Panels.PostProcessingPanel, new PostProcessingPanel(UiBase));
             UIPanels.Add(Panels.AnimatorPanel, new AnimatorPanel(UiBase));
             UIPanels.Add(Panels.Misc, new UnityExplorer.UI.Panels.Misc(UiBase));
+            UIPanels.Add(Panels.VRSpectator, new VRSpectatorPanel(UiBase));
             UIPanels.Add(Panels.Options, new OptionsPanel(UiBase));
             UIPanels.Add(Panels.UIInspectorResults, new MouseInspectorResultsPanel(UiBase));
 
             MouseInspector.inspectorUIBase = UniversalUI.RegisterUI(MouseInspector.UIBaseGUID, null);
+            // Fix MouseInspector canvas for VR as well
+            if (MouseInspector.inspectorUIBase.Canvas != null)
+                MouseInspector.inspectorUIBase.Canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             new MouseInspector(MouseInspector.inspectorUIBase);
 
             // Call some initialize methods

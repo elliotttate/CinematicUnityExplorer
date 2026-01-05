@@ -400,11 +400,11 @@ namespace UniverseLib.Input
                 if (xrSettingsType != null)
                 {
                     PropertyInfo isDeviceActiveProp = xrSettingsType.GetProperty("isDeviceActive", BindingFlags.Public | BindingFlags.Static);
-                    if (isDeviceActiveProp != null && (bool)isDeviceActiveProp.GetValue(null))
+                    if (isDeviceActiveProp != null && (bool)isDeviceActiveProp.GetValue(null, null))
                         return true;
 
                     PropertyInfo enabledProp = xrSettingsType.GetProperty("enabled", BindingFlags.Public | BindingFlags.Static);
-                    if (enabledProp != null && (bool)enabledProp.GetValue(null))
+                    if (enabledProp != null && (bool)enabledProp.GetValue(null, null))
                         return true;
                 }
 
@@ -413,7 +413,7 @@ namespace UniverseLib.Input
                 if (vrSettingsType != null)
                 {
                     PropertyInfo enabledProp = vrSettingsType.GetProperty("enabled", BindingFlags.Public | BindingFlags.Static);
-                    if (enabledProp != null && (bool)enabledProp.GetValue(null))
+                    if (enabledProp != null && (bool)enabledProp.GetValue(null, null))
                         return true;
                 }
             }
